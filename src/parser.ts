@@ -1,11 +1,10 @@
-import {ApartmentModel} from './db/krisha/house/index';
-import {initDataBase} from './db/index';
-import {mongoDbUri} from './domains/config/index';
-import {fetchAndParseApartment} from './domains/krisha/parseHouse';
+import { initDataBase } from './db/index';
+import { mongoDbUri } from './domains/config/index';
+import { fetchAndParseApartment } from './domains/krisha/parseHouse';
 
 // Подключение к MongoDB
 initDataBase(mongoDbUri);
 
 // Пример использования
 const exampleUrl = 'https://krisha.kz/a/show/692601254';
-fetchAndParseApartment(ApartmentModel, exampleUrl);
+fetchAndParseApartment(exampleUrl);

@@ -15,6 +15,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.fetchAndParseApartment = void 0;
 const axios_1 = __importDefault(require("axios"));
 const cheerio_1 = __importDefault(require("cheerio"));
+const index_1 = require("../../data/krisha/index");
 // Вспомогательные функции
 const extractNumber = (text) => {
     const cleanedText = text.replace(/\D+/g, '');
@@ -25,28 +26,25 @@ const extractFloat = (text) => {
     return match ? parseFloat(match[0]) : null;
 };
 // Функция для парсинга страницы
-const fetchAndParseApartment = (MongoDBModel, url) => __awaiter(void 0, void 0, void 0, function* () {
+const fetchAndParseApartment = (url) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { data } = yield axios_1.default.get(url);
         const $ = cheerio_1.default.load(data);
-        // Извлечение данных
-        const id = parseInt(url.split('/').pop() || '0', 10);
-        const title = $('h1').text().trim();
-        const price = extractNumber($('.offer__price').text());
-        const houseType = $('[data-name="flat.building"] .offer__advert-short-info').text().trim();
-        const yearBuilt = extractNumber($('[data-name="house.year"] .offer__advert-short-info').text());
-        const area = extractFloat($('[data-name="live.square"] .offer__advert-short-info').text());
-        const bathroom = $('[data-name="flat.toilet"] .offer__advert-short-info').text().trim();
-        // Создание и сохранение объекта в MongoDB
-        const apartment = new MongoDBModel({ id, title, price, houseType, yearBuilt, area, bathroom });
-        yield apartment.save();
-        console.log('Apartment saved:', apartment);
+        // Извлечение данных и их структурирование
+        const apartmentData = {
+            id: parseInt(url.split('/').pop() || '0', 10),
+            title: $('h1').text().trim(),
+            price: extractNumber($('.offer__price').text()),
+            houseType: $('[data-name="flat.building"] .offer__advert-short-info').text().trim(),
+            yearBuilt: extractNumber($('[data-name="house.year"] .offer__advert-short-info').text()),
+            area: extractFloat($('[data-name="live.square"] .offer__advert-short-info').text()),
+            bathroom: $('[data-name="flat.toilet"] .offer__advert-short-info').text().trim(),
+        };
+        // Сохранение данных
+        yield index_1.HouseService.saveHouse(apartmentData);
     }
     catch (error) {
         console.error('Error fetching apartment data:', error);
     }
 });
 exports.fetchAndParseApartment = fetchAndParseApartment;
-// // Пример использования
-// const exampleUrl = 'https://krisha.kz/a/show/692536989';
-// fetchAndParseApartment(exampleUrl);

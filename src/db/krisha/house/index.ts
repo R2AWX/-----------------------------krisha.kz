@@ -23,4 +23,4 @@ const apartmentSchema = new mongoose.Schema<Apartment>({
 
 const ApartmentModel = mongoose.model<Apartment>('Apartment', apartmentSchema);
 
-export {ApartmentModel};
+export { ApartmentModel };

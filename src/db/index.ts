@@ -10,4 +10,4 @@ const initDataBase = async (mongodb_uri: string | undefined) => {
   }
 };
 
-export {initDataBase};
+export { initDataBase };
