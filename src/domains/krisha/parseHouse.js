@@ -15,7 +15,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.fetchAndParseApartment = void 0;
 const axios_1 = __importDefault(require("axios"));
 const cheerio_1 = __importDefault(require("cheerio"));
-const index_1 = require("../../data/krisha/index");
 // Вспомогательные функции
 const extractNumber = (text) => {
     const cleanedText = text.replace(/\D+/g, '');
@@ -31,7 +30,7 @@ const fetchAndParseApartment = (url) => __awaiter(void 0, void 0, void 0, functi
         const { data } = yield axios_1.default.get(url);
         const $ = cheerio_1.default.load(data);
         // Извлечение данных и их структурирование
-        const apartmentData = {
+        return {
             id: parseInt(url.split('/').pop() || '0', 10),
             title: $('h1').text().trim(),
             price: extractNumber($('.offer__price').text()),
@@ -40,11 +39,10 @@ const fetchAndParseApartment = (url) => __awaiter(void 0, void 0, void 0, functi
             area: extractFloat($('[data-name="live.square"] .offer__advert-short-info').text()),
             bathroom: $('[data-name="flat.toilet"] .offer__advert-short-info').text().trim(),
         };
-        // Сохранение данных
-        yield index_1.HouseService.saveHouse(apartmentData);
     }
     catch (error) {
         console.error('Error fetching apartment data:', error);
+        throw error;
     }
 });
 exports.fetchAndParseApartment = fetchAndParseApartment;
