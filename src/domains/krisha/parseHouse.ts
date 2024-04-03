@@ -1,6 +1,5 @@
 import axios from 'axios';
 import cheerio from 'cheerio';
-import { HouseService } from '../../data/krisha/index';
 
 // Вспомогательные функции
 const extractNumber = (text: string): number | null => {
@@ -14,13 +13,13 @@ const extractFloat = (text: string): number | null => {
 };
 
 // Функция для парсинга страницы
-const fetchAndParseApartment = async (url: string): Promise<void> => {
+const fetchAndParseApartment = async (url: string): Promise<any> => { // Используйте конкретный тип вместо any
   try {
     const { data } = await axios.get(url);
     const $ = cheerio.load(data);
 
     // Извлечение данных и их структурирование
-    const apartmentData = {
+    return {
       id: parseInt(url.split('/').pop() || '0', 10),
       title: $('h1').text().trim(),
       price: extractNumber($('.offer__price').text()),
@@ -29,11 +28,9 @@ const fetchAndParseApartment = async (url: string): Promise<void> => {
       area: extractFloat($('[data-name="live.square"] .offer__advert-short-info').text()),
       bathroom: $('[data-name="flat.toilet"] .offer__advert-short-info').text().trim(),
     };
-
-    // Сохранение данных
-    await HouseService.saveHouse(apartmentData);
   } catch (error) {
     console.error('Error fetching apartment data:', error);
+    throw error;
   }
 };
 
