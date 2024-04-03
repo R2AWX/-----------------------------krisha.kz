@@ -1,11 +1,36 @@
+// Устаревшая версия!!!
+
 import axios from 'axios';
 import cheerio from 'cheerio';
-import {ApartmentModel} from '../../db/krisha/house/index'; /* нарушение методологии! */
-import {initDataBase} from '../../db/index'; /* нарушение методологии! */
-import {mongoDbUri} from '../config/index';
+import mongoose from 'mongoose';
+
+require('dotenv').config();
+
+// Определение модели для MongoDB
+interface Apartment {
+  id: number;
+  title: string;
+  price: number;
+  houseType: string;
+  yearBuilt: number;
+  area: number;
+  bathroom: string;
+}
+
+const apartmentSchema = new mongoose.Schema<Apartment>({
+  id: Number,
+  title: String,
+  price: Number,
+  houseType: String,
+  yearBuilt: Number,
+  area: Number,
+  bathroom: String,
+});
+
+const ApartmentModel = mongoose.model<Apartment>('Apartment', apartmentSchema);
 
 // Подключение к MongoDB
-initDataBase(mongoDbUri);
+mongoose.connect(process.env.MONGODB_URI as string);
 
 // Вспомогательные функции
 const extractNumber = (text: string): number | null => {

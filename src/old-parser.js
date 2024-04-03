@@ -1,4 +1,5 @@
 "use strict";
+// Устаревшая версия!!!
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -14,10 +15,20 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const axios_1 = __importDefault(require("axios"));
 const cheerio_1 = __importDefault(require("cheerio"));
-const index_1 = require("../../db/krisha/house/index");
-const index_2 = require("../../db/index");
-const index_3 = require("../config/index");
-(0, index_2.initDataBase)(index_3.mongoDbUri);
+const mongoose_1 = __importDefault(require("mongoose"));
+require('dotenv').config();
+const apartmentSchema = new mongoose_1.default.Schema({
+    id: Number,
+    title: String,
+    price: Number,
+    houseType: String,
+    yearBuilt: Number,
+    area: Number,
+    bathroom: String,
+});
+const ApartmentModel = mongoose_1.default.model('Apartment', apartmentSchema);
+// Подключение к MongoDB
+mongoose_1.default.connect(process.env.MONGODB_URI);
 // Вспомогательные функции
 const extractNumber = (text) => {
     const cleanedText = text.replace(/\D+/g, '');
@@ -42,7 +53,7 @@ function fetchAndParseApartment(url) {
             const area = extractFloat($('[data-name="live.square"] .offer__advert-short-info').text());
             const bathroom = $('[data-name="flat.toilet"] .offer__advert-short-info').text().trim();
             // Создание и сохранение объекта в MongoDB
-            const apartment = new index_1.ApartmentModel({ id, title, price, houseType, yearBuilt, area, bathroom });
+            const apartment = new ApartmentModel({ id, title, price, houseType, yearBuilt, area, bathroom });
             yield apartment.save();
             console.log('Apartment saved:', apartment);
         }
