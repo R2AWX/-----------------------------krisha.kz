@@ -1,3 +1,4 @@
+import axios from 'axios';
 import { Telegraf } from 'telegraf';
 import { initDataBase } from './db/index';
 import { User } from './db/user/index';
@@ -25,10 +26,11 @@ proxies.forEach(async (proxyData) => {
 console.log('Proxies saved to the database');
 
 // Подключение к странице, извлечение данных и отправка сообщения ботом
-const saveNewApartmentData = async (url: string) => {
+const fetchAndProcessAdById = async (adId: number) => {
+  const url = `https://krisha.kz/a/show/${adId}`;
   try {
     // Получает и сохраняет данные квартиры с указанного URL
-    const axiosInstance = useProxyForRequest(url, ProxyModel);
+    const axiosInstance = await useProxyForRequest(url, ProxyModel);
     const apartmentData = await fetchAndParseApartment(url, axiosInstance);
     await HouseService.saveHouse(apartmentData);
 
@@ -48,16 +50,42 @@ const saveNewApartmentData = async (url: string) => {
 
     // Бот отправляет рассылку пользователям
     await sendAdvertisements(bot, User, messageText);
-    console.log('Apartment data saved successfully.');
+
+    console.log('Данные успешно разосланы.');
+
+    return true;
   } catch (error) {
-    console.error('Error saving apartment data:', error);
+    if (axios.isAxiosError(error) && error.response?.status === 404) {
+      console.log(`Объявление с ID: ${adId} не найдено.`);
+      return false;
+    } else {
+      console.error(`Ошибка при обработке объявления с ID: ${adId}:`, error);
+      return false;
+    }
   }
 };
 
+// Функция для последовательного поиска и обработки новых объявлений
+const processNewAds = async (startId: number) => {
+  let currentId = startId;
+  let notFoundCount = 0; // Счётчик подряд идущих ошибок 404
 
-// Пример использования
-const exampleUrl = 'https://krisha.kz/a/show/692703597';
-saveNewApartmentData(exampleUrl);
+  while (notFoundCount < 10) { // Продолжаем, пока не встретим 10 ошибок 404 подряд
+    const adFound = await fetchAndProcessAdById(currentId);
+    if (adFound) {
+      notFoundCount = 0; // Сброс счётчика, если объявление найдено
+    } else {
+      notFoundCount++; // Увеличиваем счётчик, если объявление не найдено
+    }
+    currentId++; // Переходим к следующему ID
+  }
+
+  console.log(`Поиск новых объявлений завершен. Последний проверенный ID: ${currentId - 1}`);
+};
+
+// Запуск обработки с определенного ID
+const startFromId = 692728184; // Начальный ID для поиска новых объявлений
+processNewAds(startFromId);
 
 // Включите обработку прерывания программы (Ctrl+C) и выхода
 process.once('SIGINT', () => bot.stop('SIGINT'));
