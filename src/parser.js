@@ -12,29 +12,41 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const telegraf_1 = require("telegraf");
 const index_1 = require("./db/index");
 const index_2 = require("./db/user/index");
-const index_3 = require("./domains/config/index");
-const index_4 = require("./data/krisha/index");
+const index_3 = require("./db/proxy/index");
+const index_4 = require("./domains/config/index");
+const index_5 = require("./data/krisha/index");
 const parseHouse_1 = require("./domains/krisha/parseHouse");
-const tgBot_1 = require("./domains/user/tgBot");
+const tgBot_1 = require("./domains/bot/tgBot");
+const proxy_1 = require("./domains/proxy/proxy");
 // Подключение к MongoDB
-(0, index_1.initDataBase)(index_3.mongoDbUri);
-// Пример инициализации и использования
-const bot = new telegraf_1.Telegraf(index_3.token);
+(0, index_1.initDataBase)(index_4.mongoDbUri);
+// Запуск бота
+const bot = new telegraf_1.Telegraf(index_4.token);
 (0, tgBot_1.handleStartCommand)(bot, index_2.User);
 bot.launch();
+// Сохранение прокси
+proxy_1.proxies.forEach((proxyData) => __awaiter(void 0, void 0, void 0, function* () {
+    const proxy = new index_3.ProxyModel(proxyData);
+    yield proxy.save();
+}));
+console.log('Proxies saved to the database');
+// Подключение к странице, извлечение данных и отправка сообщения ботом
 const saveNewApartmentData = (url) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         // Получает и сохраняет данные квартиры с указанного URL
-        const apartmentData = yield (0, parseHouse_1.fetchAndParseApartment)(url);
-        yield index_4.HouseService.saveHouse(apartmentData);
+        const axiosInstance = (0, proxy_1.useProxyForRequest)(url, index_3.ProxyModel);
+        const apartmentData = yield (0, parseHouse_1.fetchAndParseApartment)(url, axiosInstance);
+        yield index_5.HouseService.saveHouse(apartmentData);
+        // Форматирование цены
+        const formattedPrice = apartmentData.price.toLocaleString('ru-RU');
         // Преобразование объекта в читаемую строку
         const messageText = ` 
     ID: ${apartmentData.id}
     Название: ${apartmentData.title}
-    Цена: ${apartmentData.price} 〒;
+    Цена: ${formattedPrice} 〒
     Тип дома: ${apartmentData.houseType}
     Год постройки: ${apartmentData.yearBuilt}
-    Площадь: ${apartmentData.area}
+    Площадь: ${apartmentData.area} м²
     Тип санузла: ${apartmentData.bathroom}
     Ссылка на объявление: https://krisha.kz/a/show/${apartmentData.id}`;
         // Бот отправляет рассылку пользователям
@@ -46,7 +58,7 @@ const saveNewApartmentData = (url) => __awaiter(void 0, void 0, void 0, function
     }
 });
 // Пример использования
-const exampleUrl = 'https://krisha.kz/a/show/681426253';
+const exampleUrl = 'https://krisha.kz/a/show/692703597';
 saveNewApartmentData(exampleUrl);
 // Включите обработку прерывания программы (Ctrl+C) и выхода
 process.once('SIGINT', () => bot.stop('SIGINT'));

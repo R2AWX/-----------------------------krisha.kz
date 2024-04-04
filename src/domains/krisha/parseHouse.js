@@ -13,7 +13,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.fetchAndParseApartment = void 0;
-const axios_1 = __importDefault(require("axios"));
 const cheerio_1 = __importDefault(require("cheerio"));
 // Вспомогательные функции
 const extractNumber = (text) => {
@@ -25,9 +24,9 @@ const extractFloat = (text) => {
     return match ? parseFloat(match[0]) : null;
 };
 // Функция для парсинга страницы
-const fetchAndParseApartment = (url) => __awaiter(void 0, void 0, void 0, function* () {
+const fetchAndParseApartment = (url, axiosInstance) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const { data } = yield axios_1.default.get(url);
+        const { data } = yield axiosInstance;
         const $ = cheerio_1.default.load(data);
         // Извлечение данных и их структурирование
         return {

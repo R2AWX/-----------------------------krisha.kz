@@ -1,4 +1,3 @@
-import axios from 'axios';
 import cheerio from 'cheerio';
 
 // Вспомогательные функции
@@ -13,9 +12,9 @@ const extractFloat = (text: string): number | null => {
 };
 
 // Функция для парсинга страницы
-const fetchAndParseApartment = async (url: string): Promise<any> => { // Используйте конкретный тип вместо any
+const fetchAndParseApartment = async (url: string, axiosInstance: any): Promise<any> => {
   try {
-    const { data } = await axios.get(url);
+    const { data } = await axiosInstance;
     const $ = cheerio.load(data);
 
     // Извлечение данных и их структурирование
